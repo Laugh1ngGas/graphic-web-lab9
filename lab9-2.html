@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lab 9-2</title>
+    <script src="./js/three.js"></script>
+    <script src="./js/dat.gui.js"></script>
+    <script src="./js/TrackballControls.js"></script>
+  </head>
+  <body>
+    <video
+      id="video"
+      loop
+      style="display: none; position: absolute; left: 15px; top: 75px"
+      src="./movies/NewVideo.mp4"
+    ></video>
+
+    <script>
+      init();
+
+      function init() {
+        var renderer = window.WebGLRenderingContext
+          ? new THREE.WebGLRenderer({ antialias: true })
+          : new THREE.CanvasRenderer();
+        renderer.setClearColor(new THREE.Color(0xeeeeee));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        var video = document.getElementById("video");
+        var videoTexture = new THREE.Texture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        videoTexture.generateMipmaps = false;
+
+        var camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        var scene = new THREE.Scene();
+        var trackballcontrols = new THREE.TrackballControls(
+          camera,
+          renderer.domElement
+        );
+
+        var cube = createMesh(new THREE.BoxGeometry(22, 16, 0.2));
+        cube.position.y = 2;
+        scene.add(cube);
+
+        camera.position.x = 0;
+        camera.position.y = 1;
+        camera.position.z = 28;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        var ambiLight = new THREE.AmbientLight(0x141414);
+        scene.add(ambiLight);
+
+        var light = new THREE.DirectionalLight();
+        light.position.set(0, 30, 20);
+        scene.add(light);
+
+        var angle = 0;
+        var radius = 10;
+
+        var controls = new (function () {
+          this.showVideo = false;
+          this.scale = 1;
+          this.circularRotate = false;
+
+          this.showCanvas = function () {
+            if (controls.showVideo) {
+              video.play();
+            } else {
+              video.pause();
+            }
+          };
+        })();
+
+        var gui = new dat.GUI();
+        gui.add(controls, "circularRotate");
+        gui.add(controls, "showVideo").onChange(controls.showCanvas);
+        gui.add(controls, "scale", 0.01, 5);
+
+        renderScene();
+
+        function createMesh(geom) {
+          var materialArray = [];
+          materialArray.push(new THREE.MeshBasicMaterial({ color: 0x0051ba }));
+          materialArray.push(new THREE.MeshBasicMaterial({ color: 0x0051ba }));
+          materialArray.push(new THREE.MeshBasicMaterial({ color: 0x0051ba }));
+          materialArray.push(new THREE.MeshBasicMaterial({ color: 0x0051ba }));
+          materialArray.push(
+            new THREE.MeshBasicMaterial({ map: videoTexture })
+          );
+          materialArray.push(new THREE.MeshBasicMaterial({ color: 0xff51ba }));
+
+          return new THREE.Mesh(geom, materialArray);
+        }
+
+        function renderScene() {
+          if (controls.circularRotate) {
+            angle += 0.01;
+            cube.position.x = radius * Math.cos(angle);
+            cube.position.z = radius * Math.sin(angle);
+          }
+
+          cube.scale.set(controls.scale, controls.scale, controls.scale);
+          videoTexture.needsUpdate = true;
+          requestAnimationFrame(renderScene);
+          trackballcontrols.update();
+          renderer.render(scene, camera);
+        }
+      }
+    </script>
+  </body>
+</html>

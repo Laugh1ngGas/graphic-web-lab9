@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lab 9-1</title>
+    <script src="./js/three.js"></script>
+    <script src="./js/TrackballControls.js"></script>
+    <script src="./js/tween.js"></script>
+  </head>
+  <body>
+    <video
+      id="video"
+      loop
+      autoplay="autoplay"
+      style="display: none; position: absolute; left: 15px; top: 75px"
+      src="./movies/Fire.mp4"
+    ></video>
+
+    <script>
+      init();
+
+      function init() {
+        var renderer = window.WebGLRenderingContext
+          ? new THREE.WebGLRenderer({ antialias: true })
+          : new THREE.CanvasRenderer();
+        renderer.setClearColor(new THREE.Color(0xeeeeee));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        var video = document.getElementById("video");
+        var videoTexture = new THREE.Texture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        videoTexture.generateMipmaps = false;
+
+        var camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+
+        var scene = new THREE.Scene();
+
+        var controls = new THREE.TrackballControls(camera);
+
+        var ambientLight = new THREE.AmbientLight(0xffffff);
+        scene.add(ambientLight);
+        var spotLight = new THREE.SpotLight(0xffffff);
+
+        spotLight.position.set(-80, 120, -20);
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+
+        var fontLoader = new THREE.FontLoader();
+        fontLoader.load("./fonts/Exo2-Regular.json", function (tex) {
+          var text_Geometry = new THREE.TextGeometry("Програмна інженерія", {
+            size: 8,
+            height: 3,
+            curveSegments: 6,
+            bevelEnabled: true,
+            bevelThickness: 2,
+            bevelSize: 1,
+            material: 0,
+            extrudeMaterial: 1,
+            font: tex,
+          });
+
+          var text_position = { x: -300, y: 100 };
+          var circle_position = { x: -300, y: 0 };
+
+          var circle_target = {};
+          circle_target.x = -60;
+          circle_target.y = 35;
+
+          var circle_geometry = new THREE.CircleGeometry(
+            6,
+            100,
+            0,
+            2 * Math.PI
+          );
+          var circle_texture = new THREE.TextureLoader().load(
+            "images/logo.jpg"
+          );
+          var circle_material = new THREE.MeshLambertMaterial({
+            map: circle_texture,
+          });
+          circle_material.side = THREE.DoubleSide;
+          var circle = new THREE.Mesh(circle_geometry, circle_material);
+          circle.castShadow = true;
+          circle.position.x = -300;
+          circle.position.y = 0;
+          scene.add(circle);
+
+          var circle_tween = new TWEEN.Tween(circle_position).to(
+            circle_target,
+            2000
+          );
+          circle_tween.start();
+
+          circle_tween.onUpdate(function () {
+            circle.position.x = circle_position.x;
+            circle.position.y = circle_position.y;
+            circle.rotation.x += 0.02;
+            circle.rotation.y += 0.02;
+            circle.rotation.z += 0.02;
+          });
+
+          circle_tween.onComplete(function () {
+            var circle_tween_1 = new TWEEN.Tween(circle_position).to(
+              circle_target,
+              2000
+            );
+            circle_tween_1.repeat(Infinity);
+            circle_tween_1.start();
+
+            circle_tween_1.onUpdate(function () {
+              circle.rotation.x += 0.02;
+              circle.rotation.y += 0.02;
+              circle.rotation.z += 0.02;
+            });
+          });
+
+          var material = new THREE.MeshStandardMaterial({ color: 0x5579a9 });
+          var text = new THREE.Mesh(text_Geometry, material);
+
+          var text_target = {};
+          text_target.x = -50;
+          text_target.y = 30;
+
+          text.position.x = -300;
+          text.position.y = 100;
+          scene.add(text);
+
+          var text_tween = new TWEEN.Tween(text_position).to(text_target, 2000);
+          text_tween.start();
+          text_tween.onUpdate(function () {
+            text.position.x = text_position.x;
+            text.position.y = text_position.y;
+          });
+        });
+
+        camera.position.x = -50;
+        camera.position.y = 70;
+        camera.position.z = 100;
+        camera.lookAt(scene.position);
+
+        renderScene();
+        function renderScene() {
+          videoTexture.needsUpdate = true;
+          requestAnimationFrame(renderScene);
+          controls.update();
+          TWEEN.update();
+
+          renderer.render(scene, camera);
+        }
+      }
+    </script>
+  </body>
+</html>
